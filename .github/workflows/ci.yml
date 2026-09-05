@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - elixir: "1.18.4"
+            otp: "27.3"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: "0.16.0"
+      - name: Mix
+        run: |
+          mix deps.get
+          mix format --check-formatted
+          mix test
+      - name: Hex package
+        run: mix hex.build
+
+  bench:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.18.4"
+          otp-version: "27.3"
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: "0.16.0"
+      - run: mix deps.get && mix bench
