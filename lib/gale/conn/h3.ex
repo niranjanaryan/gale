@@ -18,14 +18,13 @@ defmodule Gale.Conn.H3 do
 
   @impl true
   def send_file(s, status, headers, path, offset, length) do
-    {:ok, data} = File.read(path)
-    slice = slice_file(data, offset, length)
+    {:ok, %{size: size}} = File.stat(path)
+    len = if length == :all, do: size - offset, else: length
+    {:ok, fd} = :file.open(String.to_charlist(path), [:read, :raw, :binary])
+    {:ok, slice} = :file.pread(fd, offset, len)
+    :file.close(fd)
     send_resp(s, status, headers, slice)
   end
-
-  defp slice_file(data, 0, :all), do: data
-  defp slice_file(data, off, :all), do: binary_part(data, off, byte_size(data) - off)
-  defp slice_file(data, off, len), do: binary_part(data, off, len)
 
   @impl true
   def send_chunked(s, status, headers) do

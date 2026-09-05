@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Dirty-CPU Zig NIFs for QPACK/BLAKE3; H3 send_file uses pread; S3/S5 defers to Orian when loaded
 * BLAKE3 + XXH3 Zig NIFs; S3 / S5 storage (`Gale.Storage`)
 
 ## 0.1.0 — 2026-09-06

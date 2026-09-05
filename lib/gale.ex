@@ -21,8 +21,17 @@ defmodule Gale do
   in-VM H3 is `http3: true` with certs.
   """
 
-  defdelegate qpack_encode(headers), to: Gale.Native
-  defdelegate qpack_decode(bin), to: Gale.Native
+  def qpack_encode(headers) do
+    Gale.Native.qpack_encode(headers)
+  rescue
+    ErlangError -> Gale.Elixir.qpack_encode(headers)
+  end
+
+  def qpack_decode(bin) do
+    Gale.Native.qpack_decode(bin)
+  rescue
+    ErlangError -> {:error, :nif_not_loaded}
+  end
   defdelegate h3_frame_encode(kind, payload), to: Gale.Native
   defdelegate h3_frame_decode(bin), to: Gale.Native
   defdelegate quic_varint_encode(n), to: Gale.Native

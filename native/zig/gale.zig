@@ -497,16 +497,18 @@ export fn nif_xxh3(env: *erl_nif.ErlNifEnv, argc: c_int, argv: [*]const erl_nif.
     return erl_nif.enif_make_uint64(env, h);
 }
 
+const dirty_cpu: c_uint = erl_nif.ERL_NIF_DIRTY_JOB_CPU_BOUND;
+
 var nif_funcs = [_]erl_nif.ErlNifFunc{
-    .{ .name = @as([*]const u8, @ptrCast("qpack_encode")), .arity = 1, .fptr = @ptrCast(&nif_qpack_encode), .flags = 0 },
-    .{ .name = @as([*]const u8, @ptrCast("qpack_decode")), .arity = 1, .fptr = @ptrCast(&nif_qpack_decode), .flags = 0 },
+    .{ .name = @as([*]const u8, @ptrCast("qpack_encode")), .arity = 1, .fptr = @ptrCast(&nif_qpack_encode), .flags = dirty_cpu },
+    .{ .name = @as([*]const u8, @ptrCast("qpack_decode")), .arity = 1, .fptr = @ptrCast(&nif_qpack_decode), .flags = dirty_cpu },
     .{ .name = @as([*]const u8, @ptrCast("h3_frame_encode")), .arity = 2, .fptr = @ptrCast(&nif_h3_frame_encode), .flags = 0 },
     .{ .name = @as([*]const u8, @ptrCast("h3_frame_decode")), .arity = 1, .fptr = @ptrCast(&nif_h3_frame_decode), .flags = 0 },
     .{ .name = @as([*]const u8, @ptrCast("quic_varint_encode")), .arity = 1, .fptr = @ptrCast(&nif_quic_varint_encode), .flags = 0 },
     .{ .name = @as([*]const u8, @ptrCast("quic_varint_decode")), .arity = 1, .fptr = @ptrCast(&nif_quic_varint_decode), .flags = 0 },
     .{ .name = @as([*]const u8, @ptrCast("quic_parse_long_header")), .arity = 1, .fptr = @ptrCast(&nif_quic_parse_long_header), .flags = 0 },
-    .{ .name = @as([*]const u8, @ptrCast("blake3")), .arity = 1, .fptr = @ptrCast(&nif_blake3), .flags = 0 },
-    .{ .name = @as([*]const u8, @ptrCast("xxh3")), .arity = 1, .fptr = @ptrCast(&nif_xxh3), .flags = 0 },
+    .{ .name = @as([*]const u8, @ptrCast("blake3")), .arity = 1, .fptr = @ptrCast(&nif_blake3), .flags = dirty_cpu },
+    .{ .name = @as([*]const u8, @ptrCast("xxh3")), .arity = 1, .fptr = @ptrCast(&nif_xxh3), .flags = dirty_cpu },
 };
 
 var nif_entry = erl_nif.ErlNifEntry{
