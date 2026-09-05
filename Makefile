@@ -13,6 +13,7 @@ ZIG_BUILD_ARGS := \
 	-O ReleaseFast \
 	-dynamic \
 	-fallow-shlib-undefined \
+	-lc \
 	-femit-bin=$(PRIV_SO) \
 	-I $(ERTS_INCLUDE_DIR) \
 	-Mroot=$(SRC)
