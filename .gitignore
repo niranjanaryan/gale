@@ -1,0 +1,14 @@
+/_build/
+/deps/
+/doc/
+/priv/*.so
+/priv/*.dylib
+/priv/.gale.stamp
+/native/rust/target/
+erl_crash.dump
+*.ez
+/benchmark/.certs/
+*.tar
+/gale-*.tar
+.elixir_ls/
+/cover/

@@ -1,0 +1,16 @@
+name: Bug
+description: HTTP/3, Phoenix adapter, or NIF issue
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Elixir / OTP / Zig / Phoenix versions
+    validations:
+      required: true
