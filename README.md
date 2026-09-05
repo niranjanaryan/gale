@@ -41,7 +41,7 @@ responses so browsers can upgrade.
 
 Full guide: [guides/phoenix.md](guides/phoenix.md).
 
-Storage: dedicated package **[stow](https://github.com/niranjanaryan/stow)** (`Stow.put/2`), or `Gale.Storage.put(body)`. See [HASH.md](HASH.md).
+Storage: dedicated package **[orian](https://github.com/niranjanaryan/orian)** (`Orian.put/2`), or `Gale.Storage.put(body)`. See [HASH.md](HASH.md).
 
 ## Client
 
