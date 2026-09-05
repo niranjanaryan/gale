@@ -28,6 +28,8 @@ defmodule Gale do
   defdelegate quic_varint_encode(n), to: Gale.Native
   defdelegate quic_varint_decode(bin), to: Gale.Native
   defdelegate quic_parse_long_header(bin), to: Gale.Native
+  defdelegate blake3(bin), to: Gale.Native
+  defdelegate xxh3(bin), to: Gale.Native
 
   def child_spec(opts), do: Gale.Server.child_spec(opts)
   def start_link(opts), do: Gale.Server.start_link(opts)

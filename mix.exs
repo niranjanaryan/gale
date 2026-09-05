@@ -77,7 +77,8 @@ defmodule Gale.MixProject do
         "CHANGELOG.md",
         "LICENSE",
         "FUNDING.md",
-        "PUBLISH.md"
+        "PUBLISH.md",
+        "HASH.md"
       ],
       groups_for_extras: [
         Guides: ["guides/phoenix.md", "ECOSYSTEM.md"],

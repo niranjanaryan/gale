@@ -41,6 +41,8 @@ responses so browsers can upgrade.
 
 Full guide: [guides/phoenix.md](guides/phoenix.md).
 
+Storage (BLAKE3 CIDs, S3 / S5): `Gale.Storage.put(body)`. See [HASH.md](HASH.md).
+
 ## Client
 
 ```elixir

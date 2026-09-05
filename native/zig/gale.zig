@@ -482,6 +482,21 @@ export fn nif_quic_parse_long_header(env: *erl_nif.ErlNifEnv, argc: c_int, argv:
     return erl_nif.enif_make_tuple2(env, erl_nif.enif_make_atom(env, "ok"), map);
 }
 
+export fn nif_blake3(env: *erl_nif.ErlNifEnv, argc: c_int, argv: [*]const erl_nif.ERL_NIF_TERM) callconv(.c) erl_nif.ERL_NIF_TERM {
+    _ = argc;
+    const data = inspect_bin(env, argv[0]) orelse return err_atom(env, "badarg");
+    var out: [32]u8 = undefined;
+    std.crypto.hash.Blake3.hash(data, &out, .{});
+    return ok_bin_raw(env, &out);
+}
+
+export fn nif_xxh3(env: *erl_nif.ErlNifEnv, argc: c_int, argv: [*]const erl_nif.ERL_NIF_TERM) callconv(.c) erl_nif.ERL_NIF_TERM {
+    _ = argc;
+    const data = inspect_bin(env, argv[0]) orelse return err_atom(env, "badarg");
+    const h = std.hash.XxHash3.hash(0, data);
+    return erl_nif.enif_make_uint64(env, h);
+}
+
 var nif_funcs = [_]erl_nif.ErlNifFunc{
     .{ .name = @as([*]const u8, @ptrCast("qpack_encode")), .arity = 1, .fptr = @ptrCast(&nif_qpack_encode), .flags = 0 },
     .{ .name = @as([*]const u8, @ptrCast("qpack_decode")), .arity = 1, .fptr = @ptrCast(&nif_qpack_decode), .flags = 0 },
@@ -490,6 +505,8 @@ var nif_funcs = [_]erl_nif.ErlNifFunc{
     .{ .name = @as([*]const u8, @ptrCast("quic_varint_encode")), .arity = 1, .fptr = @ptrCast(&nif_quic_varint_encode), .flags = 0 },
     .{ .name = @as([*]const u8, @ptrCast("quic_varint_decode")), .arity = 1, .fptr = @ptrCast(&nif_quic_varint_decode), .flags = 0 },
     .{ .name = @as([*]const u8, @ptrCast("quic_parse_long_header")), .arity = 1, .fptr = @ptrCast(&nif_quic_parse_long_header), .flags = 0 },
+    .{ .name = @as([*]const u8, @ptrCast("blake3")), .arity = 1, .fptr = @ptrCast(&nif_blake3), .flags = 0 },
+    .{ .name = @as([*]const u8, @ptrCast("xxh3")), .arity = 1, .fptr = @ptrCast(&nif_xxh3), .flags = 0 },
 };
 
 var nif_entry = erl_nif.ErlNifEntry{

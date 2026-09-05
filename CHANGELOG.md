@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* BLAKE3 + XXH3 Zig NIFs; S3 / S5 storage (`Gale.Storage`)
+
 ## 0.1.0 — 2026-09-06
 
 First public release.

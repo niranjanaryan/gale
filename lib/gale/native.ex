@@ -25,4 +25,6 @@ defmodule Gale.Native do
   def quic_varint_encode(_n), do: :erlang.nif_error(:nif_not_loaded)
   def quic_varint_decode(_bin), do: :erlang.nif_error(:nif_not_loaded)
   def quic_parse_long_header(_bin), do: :erlang.nif_error(:nif_not_loaded)
+  def blake3(_bin), do: :erlang.nif_error(:nif_not_loaded)
+  def xxh3(_bin), do: :erlang.nif_error(:nif_not_loaded)
 end

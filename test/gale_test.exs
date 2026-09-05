@@ -13,6 +13,13 @@ defmodule GaleTest do
 
   test "Zig NIF loads" do
     assert Gale.nif_loaded?()
+    assert byte_size(Gale.blake3("hello")) == 32
+    assert is_integer(Gale.xxh3("hello"))
+  end
+
+  test "memory storage BLAKE3 CID" do
+    {:ok, cid} = Gale.Storage.put("gale blob")
+    assert {:ok, "gale blob"} = Gale.Storage.get(cid)
   end
 
   test "QPACK round-trip via Zig NIF" do

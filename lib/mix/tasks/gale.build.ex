@@ -16,6 +16,11 @@ defmodule Mix.Tasks.Gale.Build do
     so_ok? =
       match?({:ok, %{size: s}} when s > 1024, File.stat(so_path))
 
+    unless so_ok? do
+      File.rm(so_path)
+      File.rm(Path.join(File.cwd!(), "priv/gale_nif.so"))
+    end
+
     need_build =
       not so_ok? or
         (File.exists?(src) and newer?(src, so_path))
@@ -35,11 +40,9 @@ defmodule Mix.Tasks.Gale.Build do
       IO.write(out)
       if exit != 0, do: raise("Failed to compile gale Zig NIF")
 
-      local_so = Path.join(File.cwd!(), "priv/gale_nif.so")
-
-      unless Path.expand(so_path) == Path.expand(local_so) do
-        File.mkdir_p!(Path.dirname(local_so))
-        File.cp!(so_path, local_so)
+      case File.stat(so_path) do
+        {:ok, %{size: s}} when s > 1024 -> :ok
+        other -> raise("gale Zig NIF missing or empty: #{inspect(other)}")
       end
     end
   end
