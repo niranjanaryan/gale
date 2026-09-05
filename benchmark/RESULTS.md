@@ -30,19 +30,19 @@ Date: 2026-09-05
 
 | backend | iters/s | vs Elixir |
 |---|---:|---:|
-| Elixir QPACK | 173661 | 1.00× |
-| Gale Zig NIF | 1960093 | 11.29× |
-| Rust CLI | 3291405 | 18.95× |
-| HPAX (HPACK / HTTP/2) | 579213 | 3.34× |
+| Elixir QPACK | 124265 | 1.00× |
+| Gale Zig NIF | 1198007 | 9.64× |
+| Rust CLI | 2691615 | 21.66× |
+| HPAX (HPACK / HTTP/2) | 438566 | 3.53× |
 
 ## QUIC long-header parse (Zig NIF)
 
-2031694 packets/s
+1609528 packets/s
 
 ## Loopback HTTP/1.1 (Plug `200 ok`, sequential :httpc)
 
-- Bandit: 2000 GETs → **9160 req/s**
-- Cowboy: 2000 GETs → **10519 req/s**
+- Bandit: 2000 GETs → **5835 req/s**
+- Cowboy: 2000 GETs → **7292 req/s**
 
 ## Notes
 
