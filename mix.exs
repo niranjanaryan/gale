@@ -55,7 +55,6 @@ defmodule Gale.MixProject do
 
   defp aliases do
     [
-      compile: ["gale.build", "compile"],
       test: ["gale.build", "test"],
       bench: ["gale.build", "gale.bench"]
     ]

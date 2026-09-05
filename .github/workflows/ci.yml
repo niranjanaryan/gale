@@ -14,7 +14,7 @@ jobs:
           - elixir: "1.18.4"
             otp: "27.3"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         with:
           elixir-version: ${{ matrix.elixir }}
@@ -37,7 +37,7 @@ jobs:
     needs: test
     if: github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         with:
           elixir-version: "1.18.4"
