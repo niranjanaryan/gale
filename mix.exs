@@ -15,6 +15,7 @@ defmodule Gale.MixProject do
       package: package(),
       aliases: aliases(),
       escript: [main_module: Gale.CLI, name: "gale"],
+      releases: releases(),
       deps: deps(),
       docs: docs(),
       source_url: @source_url,
@@ -50,7 +51,8 @@ defmodule Gale.MixProject do
       {:plug_cowboy, "~> 2.7", optional: true},
       {:quiver, "~> 0.4", optional: true},
       {:benchee, "~> 1.3", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.38", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.38", only: :dev, runtime: false},
+      {:burrito, "~> 1.6", optional: true, runtime: false}
     ]
   end
 
@@ -58,7 +60,31 @@ defmodule Gale.MixProject do
     [
       test: ["gale.build", "test"],
       bench: ["gale.build", "gale.bench"],
-      "gale.cli": ["gale.build", "escript.build"]
+      "gale.cli": ["gale.build", "escript.build"],
+      "gale.binary": ["gale.build", "compile"]
+    ]
+  end
+
+  def wrap(%Mix.Release{} = release) do
+    if Code.ensure_loaded?(Burrito), do: Burrito.wrap(release), else: release
+  end
+
+  defp releases do
+    [
+      gale: [
+        steps: [:assemble, &__MODULE__.wrap/1],
+        burrito: [targets: burrito_targets()]
+      ]
+    ]
+  end
+
+  defp burrito_targets do
+    [
+      macos: [os: :darwin, cpu: :x86_64, skip_nifs: true],
+      macos_silicon: [os: :darwin, cpu: :aarch64, skip_nifs: true],
+      linux: [os: :linux, cpu: :x86_64, skip_nifs: true],
+      linux_aarch64: [os: :linux, cpu: :aarch64, skip_nifs: true],
+      windows: [os: :windows, cpu: :x86_64, skip_nifs: true]
     ]
   end
 
@@ -85,11 +111,12 @@ defmodule Gale.MixProject do
         "SECURITY.md"
       ],
       groups_for_extras: [
-        Guides: ["guides/phoenix.md", "ECOSYSTEM.md"],
+        Guides: ["guides/phoenix.md", "guides/plug.md", "ECOSYSTEM.md"],
         Project: ["CHANGELOG.md", "LICENSE", "FUNDING.md", "benchmark/RESULTS.md"]
       ],
       groups_for_modules: [
         Phoenix: [Gale.PhoenixAdapter, Gale.Server, Gale.Plug.Compat, Gale.Plug.AltSvc],
+        Plug: [Gale.Plug, Gale.Plug.Conn],
         Client: [Gale.HTTP, Gale.Finch, Gale.Req, Gale.Hackney],
         HTTP3: [Gale.HTTP3.Listener, Gale.HTTP3.Handler, Gale.Conn.H3],
         Codec: [Gale.Native, Gale.Elixir]
