@@ -44,7 +44,12 @@ defmodule Gale.Storage.S3 do
     url = "#{scheme}://#{host}/#{uri_encode(key)}"
     headers = maybe_sign(opts, :get, "/" <> key, [{"host", host}], "", region, host)
 
-    case :httpc.request(:get, {String.to_charlist(url), encode_headers(headers)}, [timeout: Keyword.get(opts, :timeout, 30_000)], []) do
+    case :httpc.request(
+           :get,
+           {String.to_charlist(url), encode_headers(headers)},
+           [timeout: Keyword.get(opts, :timeout, 30_000)],
+           []
+         ) do
       {:ok, {{_, 200, _}, _, body}} ->
         Gale.Storage.verify(IO.iodata_to_binary(body), cid)
 
@@ -62,7 +67,17 @@ defmodule Gale.Storage.S3 do
     else
       case {Keyword.get(opts, :access_key_id), Keyword.get(opts, :secret_access_key)} do
         {ak, sk} when is_binary(ak) and is_binary(sk) ->
-          sign(method, path, headers, payload, region, host, ak, sk, Keyword.get(opts, :session_token))
+          sign(
+            method,
+            path,
+            headers,
+            payload,
+            region,
+            host,
+            ak,
+            sk,
+            Keyword.get(opts, :session_token)
+          )
 
         _ ->
           headers
@@ -97,10 +112,15 @@ defmodule Gale.Storage.S3 do
     method_s = method |> Atom.to_string() |> String.upcase()
 
     canonical =
-      method_s <> "\n" <> path <> "\n\n" <> canonical_headers <> "\n" <> signed_headers <> "\n" <> payload_hash
+      method_s <>
+        "\n" <>
+        path <> "\n\n" <> canonical_headers <> "\n" <> signed_headers <> "\n" <> payload_hash
 
     scope = datestamp <> "/" <> region <> "/s3/aws4_request"
-    string_to_sign = "AWS4-HMAC-SHA256\n" <> amz_date <> "\n" <> scope <> "\n" <> sha256_hex(canonical)
+
+    string_to_sign =
+      "AWS4-HMAC-SHA256\n" <> amz_date <> "\n" <> scope <> "\n" <> sha256_hex(canonical)
+
     signing_key = aws_signing_key(sk, datestamp, region, "s3")
     sig = hmac_hex(signing_key, string_to_sign)
 
@@ -122,7 +142,10 @@ defmodule Gale.Storage.S3 do
   defp hmac_hex(key, data), do: Base.encode16(hmac(key, data), case: :lower)
   defp sha256_hex(data), do: Base.encode16(:crypto.hash(:sha256, data), case: :lower)
 
-  defp put_hdr(headers, k, v), do: [{k, v} | Enum.reject(headers, fn {hk, _} -> String.downcase(hk) == String.downcase(k) end)]
+  defp put_hdr(headers, k, v),
+    do: [
+      {k, v} | Enum.reject(headers, fn {hk, _} -> String.downcase(hk) == String.downcase(k) end)
+    ]
 
   defp hdr_value(headers, name) do
     {_, v} = Enum.find(headers, fn {k, _} -> String.downcase(k) == name end)

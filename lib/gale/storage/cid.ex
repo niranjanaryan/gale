@@ -18,13 +18,13 @@ defmodule Gale.Storage.CID do
   def hex(%__MODULE__{hash: hash}), do: Base.encode16(hash, case: :lower)
 
   defp leb128(n) when n < 128, do: <<n>>
-  defp leb128(n), do: <<(rem(n, 128) + 128)::8, leb128(div(n, 128))::binary>>
+  defp leb128(n), do: <<rem(n, 128) + 128::8, leb128(div(n, 128))::binary>>
 
   defp unleb128(<<b, rest::binary>>) when b < 128, do: {b, rest}
 
   defp unleb128(<<b, rest::binary>>) do
     {hi, rest2} = unleb128(rest)
-    {(b - 128) + hi * 128, rest2}
+    {b - 128 + hi * 128, rest2}
   end
 
   defp unleb128(<<>>), do: {0, <<>>}

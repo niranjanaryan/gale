@@ -32,6 +32,7 @@ defmodule Gale do
   rescue
     ErlangError -> {:error, :nif_not_loaded}
   end
+
   defdelegate h3_frame_encode(kind, payload), to: Gale.Native
   defdelegate h3_frame_decode(bin), to: Gale.Native
   defdelegate quic_varint_encode(n), to: Gale.Native

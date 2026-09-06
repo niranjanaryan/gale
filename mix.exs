@@ -78,7 +78,9 @@ defmodule Gale.MixProject do
         "LICENSE",
         "FUNDING.md",
         "PUBLISH.md",
-        "HASH.md"
+        "HASH.md",
+        "CONTRIBUTING.md",
+        "SECURITY.md"
       ],
       groups_for_extras: [
         Guides: ["guides/phoenix.md", "ECOSYSTEM.md"],
@@ -121,6 +123,10 @@ defmodule Gale.MixProject do
         "guides",
         "ECOSYSTEM.md",
         "benchmark/RESULTS.md",
+        "HASH.md",
+        "CONTRIBUTING.md",
+        "SECURITY.md",
+        "CODE_OF_CONDUCT.md",
         ".formatter.exs"
       ],
       exclude_patterns: [~r"\.so$", ~r"native/rust/target"]
