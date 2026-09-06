@@ -1,70 +1,79 @@
-# Gale for Phoenix - HTTP/1.1, HTTP/2, HTTP/3 (QUIC)
+# Gale for Phoenix
 
-Gale is the Phoenix adapter that replaces **Bandit** for HTTP/1.1 and HTTP/2,
-and adds **HTTP/3 over QUIC** on UDP.
+**HTTP/1.1 + HTTP/2 + HTTP/3 (QUIC) adapter for Phoenix applications.**
 
-## Performance
+Gale replaces Bandit for HTTP/1.1 and HTTP/2, and adds HTTP/3 over QUIC on UDP.
 
-| Protocol | Implementation | Performance |
-|----------|---------------|------------|
-| HTTP/1.1 | Bandit | ~6-7K req/s |
-| HTTP/2 | Bandit | ~2K req/s |
-| **HTTP/3** | `:quic_h3` + **Gale** | **~1.5M req/s** |
-| QPACK encode | **Gale Zig NIF** | **~650K iters/s** |
-
-HTTP/3 achieves **1.5M req/s** with parallel streams on a single connection!
-
-## Install
+## Installation
 
 ```elixir
 # mix.exs
-defp deps do
-  [
-    {:phoenix, "~> 1.8"},
-    {:gale, "~> 0.1"}
-  ]
+def deps do
+  [{:gale, "~> 0.1"}]
 end
 ```
 
-## Use as Phoenix Default Adapter
+## Quick Start
+
+### 1. Configure Phoenix Endpoint
 
 ```elixir
 # config/config.exs
 config :my_app, MyAppWeb.Endpoint,
-  adapter: Gale.PhoenixAdapter,
-  url: [host: "example.com"],
-  render_errors: [...],
-  pubsub_server: MyApp.PubSub,
-  live_view: [signing_salt: "..."]
+  adapter: Gale.PhoenixAdapter
 ```
 
-Or migrate automatically:
+Or use the generator:
 
 ```bash
 mix gale.phoenix
 ```
 
-## Development
+### 2. Enable HTTP/3 (optional)
+
+```elixir
+# config/dev.exs or config/runtime.exs
+config :my_app, MyAppWeb.Endpoint,
+  https: [port: 443, certfile: "...", keyfile: "..."],
+  http3: true
+```
+
+### 3. Open Firewall
+
+```bash
+# TCP for HTTP/1.1, HTTP/2
+firewall-cmd --add-port=443/tcp
+
+# UDP for HTTP/3
+firewall-cmd --add-port=443/udp
+```
+
+## Performance
+
+| Protocol | req/s | vs HTTP/1.1 |
+|----------|------:|:-----------:|
+| HTTP/1.1 | ~2,000 | 1× |
+| HTTP/2 | ~2,500 | 1.25× |
+| **HTTP/3 (7 streams)** | **~825,000** | **412×** |
+
+## Configuration
+
+### Development
 
 ```elixir
 # config/dev.exs
 config :my_app, MyAppWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],
-  https: [
-    port: 4001,
-    cipher_suite: :strong,
-    certfile: "priv/cert/selfsigned.pem",
-    keyfile: "priv/cert/selfsigned_key.pem"
-  ],
-  http3: true  # Enable HTTP/3!
+  https: [port: 4001, certfile: "...", keyfile: "..."],
+  http3: true
 ```
 
-Generate certs:
+Generate self-signed certs:
 ```bash
 mix phx.gen.cert
 ```
 
-## Production
+### Production
 
 ```elixir
 # config/runtime.exs
@@ -79,19 +88,17 @@ config :my_app, MyAppWeb.Endpoint,
   server: true
 ```
 
-Open **TCP 443** (H1/H2) and **UDP 443** (H3).
-
 ## How It Works
 
 ```
 Browser ─── HTTP/1.1 ───► Bandit ───► Phoenix Endpoint
-         ─── HTTP/2 ───► Bandit ───► Phoenix Endpoint  
-         ─── HTTP/3 ───► :quic_h3 ──► Phoenix Endpoint (via Gale)
+         ─── HTTP/2 ────► Bandit ───► Phoenix Endpoint
+         ─── HTTP/3 ────► QUIC ──────► Phoenix Endpoint
 
-LiveView/WebSocket ── TCP ──► Bandit (unchanged)
+LiveView/WebSocket ─── TCP ──► Bandit (unchanged)
 ```
 
-Gale injects `alt-svc` headers so browsers upgrade to HTTP/3 automatically.
+Gale sends `alt-svc: h3="host:443"` headers so browsers upgrade to HTTP/3.
 
 ## What Stays on Bandit
 
@@ -116,4 +123,18 @@ Gale injects `alt-svc` headers so browsers upgrade to HTTP/3 automatically.
 - **Multiplexing** without head-of-line blocking
 - **Better on lossy networks** (mobile, WiFi)
 - **Connection migration** (IP changes don't break connection)
-- **~1.5M req/s** with parallel streams (see benchmarks)
+
+## Troubleshooting
+
+### Browser doesn't upgrade to HTTP/3
+
+1. Check **UDP 443** is open
+2. Verify valid SSL certificates
+3. Check `alt-svc` header in responses
+4. Ensure `:quic_h3` started successfully
+
+## See Also
+
+- [Plug Guide](plug.md) — For non-Phoenix Plug applications
+- [COMPARISON.md](../COMPARISON.md) — Detailed Gale vs Bandit comparison
+- [benchmark/RESULTS.md](../benchmark/RESULTS.md) — Performance benchmarks

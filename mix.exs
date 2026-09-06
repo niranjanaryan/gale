@@ -46,7 +46,7 @@ defmodule Gale.MixProject do
       {:finch, "~> 0.19"},
       {:req, "~> 0.5"},
       {:quic, "~> 1.8"},
-      {:hackney, "~> 4.5"},
+      {:hackney, "~> 4.5", optional: true, override: true},
       {:telemetry, "~> 1.0"},
       {:plug_cowboy, "~> 2.7", optional: true},
       {:quiver, "~> 0.4", optional: true},
@@ -111,7 +111,7 @@ defmodule Gale.MixProject do
         "SECURITY.md"
       ],
       groups_for_extras: [
-        Guides: ["guides/phoenix.md", "guides/plug.md", "ECOSYSTEM.md"],
+        Guides: ["guides/phoenix.md", "guides/plug.md", "COMPARISON.md", "ECOSYSTEM.md"],
         Project: ["CHANGELOG.md", "LICENSE", "FUNDING.md", "benchmark/RESULTS.md"]
       ],
       groups_for_modules: [
