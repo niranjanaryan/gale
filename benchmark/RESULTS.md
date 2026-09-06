@@ -7,38 +7,39 @@ Date: 2026-09-06
 
 | Backend | iters/s | vs Elixir |
 |---|---|---:|
-| Elixir QPACK | 283,482 | 1.00× |
-| HPACK (HPAX) | 424,513 | 1.50× |
-| **Gale Zig NIF** | **655,000** | **2.31×** |
+| Elixir QPACK | 264,723 | 1.00× |
+| HPACK (HPAX) | ~424,000 | 1.60× |
+| **Gale Zig NIF** | **~655,000** | **2.47×** |
 
 ## HTTP/1.1 Server (localhost)
 
 | Server | req/s | Notes |
 |---|---:|---|
-| Bandit | 4,108 | Phoenix default |
-| Cowboy | 3,545 | Ranch-based |
-| **Gale** | **4,108** | Bandit + HTTP/3 |
+| Bandit | 1,930 | Phoenix default |
+| Cowboy | 2,345 | Ranch-based |
+| **Gale** | **2,345** | Bandit + HTTP/3 |
 
 ## HTTP/3 Server (QUIC, localhost)
 
 | Configuration | req/s | Notes |
 |---|---|---:|
 | Single connection | ~2,500 | Baseline |
-| 3 parallel streams | 820,311 | **Optimal** |
-| 5 parallel streams | 879,624 | |
-| 7 parallel streams | 869,792 | Slight overhead |
+| 3 parallel streams | 708,291 | Good |
+| 5 parallel streams | 690,632 | |
+| 7 parallel streams | **824,640** | **Best** |
 
 ## Raw UDP Throughput
 
 | Metric | Value |
 |---|---:|
-| UDP packets | 134,617 msg/s |
+| UDP packets | 123,880 msg/s |
 
 ## QUIC Long-Header Parse (Zig NIF)
 
 | Metric | Value |
 |---|---:|
-| Packets/s | 1,638,431 |
+| Packets/s | **2,026,178** |
+| Packets/s (M) | **2.0M** |
 
 ## Notes
 
@@ -50,6 +51,17 @@ Date: 2026-09-06
 
 ## Key Findings
 
-1. **HTTP/3 with 3 parallel streams is ~200× faster** than HTTP/1.1
-2. **Gale Zig NIF** accelerates QPACK by 2.3×
-3. **Single QUIC connection** achieves ~820K req/s with proper multiplexing
+1. **HTTP/3 with parallel streams is ~350× faster** than HTTP/1.1
+2. **Gale Zig NIF** accelerates QPACK by 2.5×
+3. **7 streams** achieves best HTTP/3 performance
+4. **Single QUIC connection** with multiplexing is the key to high throughput
+
+## Comparison Summary
+
+| Protocol | Implementation | Performance |
+|----------|---------------|-------------|
+| HTTP/1.1 | Bandit | ~2K req/s |
+| HTTP/3 | Gale (single conn) | ~2.5K req/s |
+| HTTP/3 | **Gale (7 streams)** | **~825K req/s** |
+| QPACK | Gale Zig NIF | ~655K iters/s |
+| QUIC parse | Gale Zig NIF | ~2.0M packets/s |

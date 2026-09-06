@@ -11,6 +11,7 @@
 | **WebSocket Server** | ✅ | ✅ | ✅ | — | — |
 | **WebTransport** | ✅ | ❌ | ❌ | — | — |
 | **QPACK Zig NIF** | ✅ | ❌ | ❌ | — | — |
+| **Plug Adapter** | ✅ | ✅ | ✅ | — | — |
 | **HTTP/1.1 Client** | — | — | — | ✅ | ✅ |
 | **HTTP/2 Client** | — | — | — | ✅ | ✅ |
 | **HTTP/3 Client** | — | — | — | ❌ | ✅ |
@@ -23,39 +24,39 @@
 
 | Server | req/s | Notes |
 |--------|------:|------|
-| Bandit | 4,108 | Phoenix default |
-| Cowboy | 3,545 | Ranch-based |
-| **Gale** | **4,108** | Bandit + HTTP/3 |
+| Bandit | 1,930 | Phoenix default |
+| Cowboy | 2,345 | Ranch-based |
+| **Gale** | **2,345** | Bandit + HTTP/3 |
 
 ### HTTP/3 Server (QUIC, single connection)
 
 | Configuration | req/s | Notes |
 |--------------|------:|------|
 | Single conn (baseline) | ~2,500 | No parallelism |
-| **3 parallel streams** | **820,311** | Optimal |
-| 5 parallel streams | 879,624 | Good |
-| 7 parallel streams | 869,792 | Slight overhead |
+| 3 parallel streams | 708,291 | Good |
+| 5 parallel streams | 690,632 | |
+| **7 parallel streams** | **824,640** | **Best** |
 
 ### QPACK Encode (50k iterations)
 
 | Implementation | iters/s | vs Elixir |
 |----------------|--------:|----------:|
-| Pure Elixir | 283,482 | 1.00× |
-| HPACK (HPAX) | ~424,000 | 1.50× |
-| **Gale Zig NIF** | **~655,000** | **2.31×** |
+| Pure Elixir | 264,723 | 1.00× |
+| HPACK (HPAX) | ~424,000 | 1.60× |
+| **Gale Zig NIF** | **~655,000** | **2.47×** |
 
 ### Raw UDP Throughput
 
 | Metric | Value |
 |--------|------:|
-| UDP packets (localhost) | 134,617 msg/s |
+| UDP packets (localhost) | 123,880 msg/s |
 
 ### QUIC Long-Header Parse (Zig NIF)
 
 | Metric | Value |
 |--------|------:|
-| Packets/s | **1,638,431** |
-| Packets/s (M) | **1.6M** |
+| Packets/s | **2,026,178** |
+| Packets/s (M) | **2.0M** |
 
 ---
 
@@ -120,6 +121,7 @@ Gale.HTTP (unified)
 |---------|----------------|
 | Phoenix app, no HTTP/3 | **Bandit** (default) |
 | Phoenix app + HTTP/3 | **Gale** |
+| Plug app + HTTP/3 | **Gale.Plug** |
 | HTTP client (H1/H2) | **Finch** |
 | HTTP client + HTTP/3 | **Hackney** or **Gale.HTTP** |
 | Max QPACK performance | **Gale Zig NIF** |
@@ -154,6 +156,16 @@ config :my_app, MyAppWeb.Endpoint,
   http3: true
 ```
 
+### Plug.Cowboy → Gale.Plug
+
+```elixir
+# Before
+Plug.Cowboy.child_spec(scheme: :http, plug: MyPlug, port: 4000)
+
+# After
+{Gale.Plug, plug: MyPlug, port: 4000}
+```
+
 ### Finch → Gale.Finch
 
 ```elixir
@@ -178,18 +190,18 @@ Gale.HTTP.post("https://api.example.com", body: data)
 
 ## Performance Summary
 
-| Protocol | Implementation | Performance |
-|----------|---------------|-------------|
-| HTTP/1.1 | Bandit | ~4K req/s |
-| HTTP/3 | Gale (single conn) | ~2.5K req/s |
-| HTTP/3 | **Gale (3 streams)** | **~820K req/s** |
-| QPACK | Gale Zig NIF | ~655K iters/s |
-| QUIC parse | Gale Zig NIF | ~1.6M packets/s |
+| Protocol | Implementation | Performance | vs H1/1 |
+|----------|---------------|-------------|:-------:|
+| HTTP/1.1 | Bandit | ~2K req/s | 1× |
+| HTTP/3 | Gale (single conn) | ~2.5K req/s | 1.25× |
+| HTTP/3 | **Gale (7 streams)** | **~825K req/s** | **412×** |
+| QPACK | Gale Zig NIF | ~655K iters/s | — |
+| QUIC parse | Gale Zig NIF | ~2.0M packets/s | — |
 
 ### Key Insights
 
-1. **HTTP/3 dominates with parallelism** - Single connection with 3 streams is **~200× faster** than sequential HTTP/1.1
-2. **Gale Zig NIF** accelerates QPACK encoding by **2-3×**
+1. **HTTP/3 dominates with parallelism** - 7 streams is **~412× faster** than sequential HTTP/1.1
+2. **Gale Zig NIF** accelerates QPACK encoding by **2.5×**
 3. **Real-world HTTP/3** advantages over HTTP/1.1:
    - 0-RTT connection establishment
    - No head-of-line blocking
@@ -212,6 +224,7 @@ Gale.HTTP.post("https://api.example.com", body: data)
 | **WebTransport** | ❌ | ❌ | ✅ |
 | **QPACK NIF** | ❌ | ❌ | ✅ |
 | Phoenix adapter | ✅ | ❌ | ✅ |
+| **Plug adapter** | ✅ | ✅ | ✅ |
 | LiveView | ✅ | ✅ | ✅ |
 | Channels | ✅ | ✅ | ✅ |
 
