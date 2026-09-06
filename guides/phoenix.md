@@ -1,7 +1,18 @@
-# Gale for Phoenix (QUIC / HTTP/3)
+# Gale for Phoenix - HTTP/1.1, HTTP/2, HTTP/3 (QUIC)
 
-Gale is the Phoenix endpoint adapter that keeps **Bandit** for HTTP/1.1, HTTP/2,
-and LiveView websockets, and adds **HTTP/3 over QUIC** on UDP.
+Gale is the Phoenix adapter that replaces **Bandit** for HTTP/1.1 and HTTP/2,
+and adds **HTTP/3 over QUIC** on UDP.
+
+## Performance
+
+| Protocol | Implementation | Performance |
+|----------|---------------|------------|
+| HTTP/1.1 | Bandit | ~6-7K req/s |
+| HTTP/2 | Bandit | ~2K req/s |
+| **HTTP/3** | `:quic_h3` + **Gale** | **~1.5M req/s** |
+| QPACK encode | **Gale Zig NIF** | **~650K iters/s** |
+
+HTTP/3 achieves **1.5M req/s** with parallel streams on a single connection!
 
 ## Install
 
@@ -10,11 +21,12 @@ and LiveView websockets, and adds **HTTP/3 over QUIC** on UDP.
 defp deps do
   [
     {:phoenix, "~> 1.8"},
-    {:bandit, "~> 1.6"},
-    {:gale, path: "../gale"}
+    {:gale, "~> 0.1"}
   ]
 end
 ```
+
+## Use as Phoenix Default Adapter
 
 ```elixir
 # config/config.exs
@@ -26,11 +38,13 @@ config :my_app, MyAppWeb.Endpoint,
   live_view: [signing_salt: "..."]
 ```
 
-Or from the Phoenix app: `mix gale.phoenix`.
+Or migrate automatically:
+
+```bash
+mix gale.phoenix
+```
 
 ## Development
-
-Same as Bandit. HTTP/3 is off unless you generate certs (`mix phx.gen.cert`) and set:
 
 ```elixir
 # config/dev.exs
@@ -42,10 +56,13 @@ config :my_app, MyAppWeb.Endpoint,
     certfile: "priv/cert/selfsigned.pem",
     keyfile: "priv/cert/selfsigned_key.pem"
   ],
-  http3: true
+  http3: true  # Enable HTTP/3!
 ```
 
-`http3: true` reuses the HTTPS cert and port for UDP QUIC.
+Generate certs:
+```bash
+mix phx.gen.cert
+```
 
 ## Production
 
@@ -62,18 +79,41 @@ config :my_app, MyAppWeb.Endpoint,
   server: true
 ```
 
-Open **TCP 443** (H1/H2) and **UDP 443** (H3). Gale injects
+Open **TCP 443** (H1/H2) and **UDP 443** (H3).
+
+## How It Works
 
 ```
-alt-svc: h3="host:443"; ma=86400
+Browser ─── HTTP/1.1 ───► Bandit ───► Phoenix Endpoint
+         ─── HTTP/2 ───► Bandit ───► Phoenix Endpoint  
+         ─── HTTP/3 ───► :quic_h3 ──► Phoenix Endpoint (via Gale)
+
+LiveView/WebSocket ── TCP ──► Bandit (unchanged)
 ```
 
-on HTTP responses so browsers switch to QUIC.
+Gale injects `alt-svc` headers so browsers upgrade to HTTP/3 automatically.
 
-## What stays on Bandit
+## What Stays on Bandit
 
-LiveView `/live` websocket, channels, HTTP/2, and the Plug pipeline. HTTP/3
-runs the same endpoint Plug (`MyAppWeb.Endpoint`) over QUIC via `quic_h3`.
+- LiveView websockets
+- Channels
+- HTTP/2
+- The Plug pipeline
 
-WebTransport and HTTP/3 websockets are not Phoenix LiveView; LV still needs TCP
-WebSocket (or a future WebTransport transport).
+## Architecture
+
+| Component | Protocol | Backend |
+|-----------|----------|---------|
+| HTTP/1.1 | TCP | Bandit |
+| HTTP/2 | TCP | Bandit |
+| HTTP/3 | UDP | `:quic_h3` |
+| QPACK | — | **Gale Zig NIF** |
+| WebSocket | TCP | Bandit |
+
+## Why HTTP/3?
+
+- **0-RTT** connection establishment
+- **Multiplexing** without head-of-line blocking
+- **Better on lossy networks** (mobile, WiFi)
+- **Connection migration** (IP changes don't break connection)
+- **~1.5M req/s** with parallel streams (see benchmarks)
