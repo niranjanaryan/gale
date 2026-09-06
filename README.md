@@ -8,6 +8,14 @@
 
 Phoenix adapter for **HTTP/1.1 + HTTP/2 + HTTP/3 (QUIC)**.
 
+```
+gale   — Phoenix HTTP/3
+ingot  — Iroh + Zenoh cluster (Hex: `ingot_cluster`)
+dusk   — Zenoh + Iroh cluster
+orian  — BLAKE3 / S3 / S5 storage
+zeiroh — Phoenix FLAME overlay
+```
+
 LiveView and websockets stay on [Bandit](https://github.com/mtrudel/bandit) (TCP).
 HTTP/3 is UDP QUIC via Hex [`quic`](https://hex.pm/packages/quic). A Zig NIF
 handles QPACK and HTTP/3 frames.
