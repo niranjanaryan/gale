@@ -70,6 +70,11 @@ defmodule GaleTest do
     assert Gale.Plug.Adapter.alt_svc("ex.com", 443) == ~s(h3="ex.com:443"; ma=86400)
   end
 
+  test "CLI install paths" do
+    assert is_binary(Gale.CLI.Paths.bin_dir())
+    assert Gale.CLI.Paths.priv_dir(:gale) =~ "gale"
+  end
+
   test "CLI help and nif" do
     assert :ok = Gale.CLI.main(["--help"], halt: false)
     assert :ok = Gale.CLI.main(["version"], halt: false)

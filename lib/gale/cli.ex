@@ -18,7 +18,10 @@ defmodule Gale.CLI do
     --algo A            blake3 (default) or xxh3
     -h, --help
 
-  Install: mix gale.install   (escript → ~/.local/bin/gale)
+  Install: mix gale.install
+    Linux/macOS: ~/.local/bin
+    Windows:     %LOCALAPPDATA%\\elixcoder\\bin
+    Override:    ELIXCODER_BIN
   """
 
   def main(args), do: main(args, halt: !mix?())

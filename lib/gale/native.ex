@@ -17,16 +17,20 @@ defmodule Gale.Native do
   end
 
   defp nif_candidates do
+    _ = Code.ensure_loaded(Gale.CLI.Paths)
+
     app =
       case :code.priv_dir(:gale) do
         {:error, _} -> []
         dir -> [Path.join(dir, "gale_nif")]
       end
 
-    home = Path.join(Path.expand("~/.gale/priv"), "gale_nif")
     env = System.get_env("GALE_PRIV")
     env = if env, do: [Path.join(env, "gale_nif")], else: []
-    app ++ env ++ [home] ++ [Path.expand("../../priv/gale_nif", __DIR__)]
+
+    app ++
+      env ++
+      Gale.CLI.Paths.nif_dirs(:gale, "gale_nif") ++ [Path.expand("../../priv/gale_nif", __DIR__)]
   end
 
   def qpack_encode(_headers), do: :erlang.nif_error(:nif_not_loaded)

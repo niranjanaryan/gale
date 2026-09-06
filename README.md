@@ -54,7 +54,9 @@ Storage: dedicated package **[orian](https://github.com/niranjanaryan/orian)** (
 ## CLI
 
 ```bash
-mix gale.install          # ~/.local/bin/gale  +  ~/.gale/priv NIFs
+mix gale.install
+# Linux/macOS: ~/.local/bin    Windows: %LOCALAPPDATA%\elixcoder\bin
+# needs escript (Erlang/OTP) on PATH
 
 gale get https://example.com
 gale get https://example.com --http3
