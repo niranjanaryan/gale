@@ -51,6 +51,20 @@ Full guide: [guides/phoenix.md](guides/phoenix.md).
 
 Storage: dedicated package **[orian](https://github.com/niranjanaryan/orian)** (`Orian.put/2`), or `Gale.Storage.put(body)`. See [HASH.md](HASH.md).
 
+## CLI
+
+```bash
+mix gale.install          # ~/.local/bin/gale  +  ~/.gale/priv NIFs
+
+gale get https://example.com
+gale get https://example.com --http3
+gale hash ./file --algo blake3
+gale nif
+gale version
+```
+
+Inside a Mix project: `mix gale get …`.
+
 ## Client
 
 ```elixir

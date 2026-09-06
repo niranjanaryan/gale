@@ -70,6 +70,12 @@ defmodule GaleTest do
     assert Gale.Plug.Adapter.alt_svc("ex.com", 443) == ~s(h3="ex.com:443"; ma=86400)
   end
 
+  test "CLI help and nif" do
+    assert :ok = Gale.CLI.main(["--help"], halt: false)
+    assert :ok = Gale.CLI.main(["version"], halt: false)
+    assert :ok = Gale.CLI.main(["nif"], halt: false)
+  end
+
   test "ecosystem survey includes gale and bandit" do
     ids = Gale.Survey.probe() |> Enum.filter(& &1.loaded) |> Enum.map(& &1.id)
     assert :gale in ids

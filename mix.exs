@@ -14,6 +14,7 @@ defmodule Gale.MixProject do
       description: description(),
       package: package(),
       aliases: aliases(),
+      escript: [main_module: Gale.CLI, name: "gale"],
       deps: deps(),
       docs: docs(),
       source_url: @source_url,
@@ -56,7 +57,8 @@ defmodule Gale.MixProject do
   defp aliases do
     [
       test: ["gale.build", "test"],
-      bench: ["gale.build", "gale.bench"]
+      bench: ["gale.build", "gale.bench"],
+      "gale.cli": ["gale.build", "escript.build"]
     ]
   end
 

@@ -8,5 +8,5 @@ First public Hex release.
 * HTTP/1.1 + HTTP/2 via Bandit; HTTP/3 via Hex `quic` when `http3: true`
 * Zig dirty-CPU NIF: QPACK, HTTP/3 frames, QUIC parse, BLAKE3, XXH3
 * Client facades: `Gale.get/2`, Finch, Req, hackney
-* `mix gale.phoenix`, `mix bench`
+* `mix gale.phoenix`, `mix bench`, `gale` CLI (`mix gale.install`)
 * S3/S5 storage; defers to Orian when the host app has it
