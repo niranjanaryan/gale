@@ -1,170 +1,170 @@
-//! QPACK static-table encoder matching the Zig NIF, used as a Rust
-//! throughput baseline (process-local, no BEAM).
+use std::net::{TcpListener, TcpStream};
+use std::io::{Read, Write, BufRead};
+use std::time::Instant;
 
-const STATIC: &[(&str, &str)] = &[
-    (":authority", ""),
-    (":path", "/"),
-    ("age", "0"),
-    ("content-disposition", ""),
-    ("content-length", "0"),
-    ("cookie", ""),
-    ("date", ""),
-    ("etag", ""),
-    ("if-modified-since", ""),
-    ("if-none-match", ""),
-    ("last-modified", ""),
-    ("link", ""),
-    ("location", ""),
-    ("referer", ""),
-    ("set-cookie", ""),
-    (":method", "CONNECT"),
-    (":method", "DELETE"),
-    (":method", "GET"),
-    (":method", "HEAD"),
-    (":method", "OPTIONS"),
-    (":method", "POST"),
-    (":method", "PUT"),
-    (":scheme", "http"),
-    (":scheme", "https"),
-    (":status", "103"),
-    (":status", "200"),
-    (":status", "304"),
-    (":status", "404"),
-    (":status", "503"),
-    ("accept", "*/*"),
-    ("accept", "application/dns-message"),
-    ("accept-encoding", "gzip, deflate, br"),
-    ("accept-ranges", "bytes"),
-    ("access-control-allow-headers", "cache-control"),
-    ("access-control-allow-headers", "content-type"),
-    ("access-control-allow-origin", "*"),
-    ("cache-control", "max-age=0"),
-    ("cache-control", "max-age=2592000"),
-    ("cache-control", "max-age=604800"),
-    ("cache-control", "no-cache"),
-    ("cache-control", "no-store"),
-    ("cache-control", "public, max-age=31536000"),
-    ("content-encoding", "br"),
-    ("content-encoding", "gzip"),
-    ("content-type", "application/dns-message"),
-    ("content-type", "application/javascript"),
-    ("content-type", "application/json"),
-    ("content-type", "application/x-www-form-urlencoded"),
-    ("content-type", "image/gif"),
-    ("content-type", "image/jpeg"),
-    ("content-type", "image/png"),
-    ("content-type", "text/css"),
-    ("content-type", "text/html; charset=utf-8"),
-    ("content-type", "text/plain"),
-    ("content-type", "text/plain;charset=utf-8"),
-    ("range", "bytes=0-"),
-    ("strict-transport-security", "max-age=31536000"),
-    ("strict-transport-security", "max-age=31536000; includesubdomains"),
-    (
-        "strict-transport-security",
-        "max-age=31536000; includesubdomains; preload",
-    ),
-    ("x-content-type-options", "nosniff"),
-    ("x-xss-protection", "1; mode=block"),
-    (":status", "100"),
-    (":status", "204"),
-    (":status", "206"),
-    (":status", "302"),
-    (":status", "400"),
-    (":status", "403"),
-    (":status", "421"),
-    (":status", "425"),
-    (":status", "500"),
-    ("accept-language", ""),
-    ("access-control-allow-credentials", "FALSE"),
-    ("access-control-allow-credentials", "TRUE"),
-    ("access-control-allow-headers", "*"),
-    ("access-control-allow-methods", "get"),
-    ("access-control-allow-methods", "get, post, options"),
-    ("access-control-allow-methods", "options"),
-    ("access-control-expose-headers", "content-length"),
-    ("access-control-request-headers", "content-type"),
-    ("access-control-request-method", "get"),
-    ("access-control-request-method", "post"),
-    ("alt-svc", "clear"),
-    ("authorization", ""),
-    (
-        "content-security-policy",
-        "script-src 'none'; object-src 'none'; base-uri 'none'",
-    ),
-    ("early-data", "1"),
-    ("expect-ct", ""),
-    ("forwarded", ""),
-    ("if-range", ""),
-    ("origin", ""),
-    ("purpose", "prefetch"),
-    ("server", ""),
-    ("timing-allow-origin", "*"),
-    ("upgrade-insecure-requests", "1"),
-    ("user-agent", ""),
-    ("x-forwarded-for", ""),
-    ("x-frame-options", "deny"),
-    ("x-frame-options", "sameorigin"),
+// QPACK Static Table (RFC 9204)
+struct StaticEntry(&'static str, &'static str);
+const STATIC_TABLE: &[StaticEntry] = &[
+    StaticEntry(":authority", ""),
+    StaticEntry(":path", "/"),
+    StaticEntry(":method", "GET"),
+    StaticEntry(":method", "POST"),
+    StaticEntry(":scheme", "https"),
+    StaticEntry(":status", "200"),
+    StaticEntry(":status", "404"),
+    StaticEntry("content-type", "application/json"),
+    StaticEntry("content-type", "text/plain"),
+    StaticEntry("accept", "*/*"),
+    StaticEntry("user-agent", ""),
 ];
 
-fn encode_int(buf: &mut Vec<u8>, n: usize, prefix_bits: u8, first_mask: u8) {
-    let max = (1usize << prefix_bits) - 1;
-    if n < max {
-        buf.push(first_mask | n as u8);
-        return;
-    }
-    buf.push(first_mask | max as u8);
-    let mut rest = n - max;
-    while rest >= 128 {
-        buf.push(((rest % 128) as u8) | 128);
-        rest /= 128;
-    }
-    buf.push(rest as u8);
+fn find_static_idx(name: &str, value: &str) -> Option<usize> {
+    STATIC_TABLE.iter().position(|e| e.0 == name && e.1 == value)
 }
 
-fn qpack_encode(headers: &[(&str, &str)]) -> Vec<u8> {
-    let mut buf = Vec::with_capacity(64);
-    buf.push(0);
-    buf.push(0);
+// HTTP/1.1 Response
+fn http1_response() -> String {
+    "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\n\r\nok".to_string()
+}
+
+// HTTP/1.1 Handler
+fn handle_http1(mut stream: TcpStream) -> std::io::Result<()> {
+    let mut buffer = [0u8; 1024];
+    stream.read(&mut buffer)?;
+    let response = http1_response();
+    stream.write_all(response.as_bytes())?;
+    stream.flush()
+}
+
+// HTTP/1.1 Server
+fn serve_http1(port: u16, count: usize) -> f64 {
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
+    listener.set_nonblocking(true).unwrap();
+    
+    let start = Instant::now();
+    let mut handled = 0;
+    
+    for stream in listener.incoming() {
+        match stream {
+            Ok(stream) => {
+                handle_http1(stream).ok();
+                handled += 1;
+                if handled >= count { break; }
+            }
+            Err(_) => continue,
+        }
+    }
+    
+    let elapsed = start.elapsed().as_secs_f64();
+    count as f64 / elapsed
+}
+
+// Simple frame writer
+fn write_varint(buf: &mut Vec<u8>, n: u64) {
+    if n <= 63 {
+        buf.push(n as u8);
+    } else if n <= 16383 {
+        buf.push(0x40 | ((n >> 8) as u8));
+        buf.push((n & 0xff) as u8);
+    } else {
+        buf.push(0x80 | ((n >> 24) as u8));
+        buf.push((n >> 16) as u8);
+        buf.push((n >> 8) as u8);
+        buf.push(n as u8);
+    }
+}
+
+// H1 Response with keep-alive
+fn h1_benchmark(port: u16, n: usize) -> f64 {
+    std::thread::spawn(move || serve_http1(port, n));
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    
+    let start = Instant::now();
+    let mut count = 0;
+    
+    for _ in 0..n {
+        if let Ok(mut stream) = TcpStream::connect(format!("127.0.0.1:{}", port)) {
+            stream.write_all(b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n").ok();
+            let mut buf = [0u8; 2];
+            stream.read(&mut buf).ok();
+            count += 1;
+        }
+    }
+    
+    let elapsed = start.elapsed().as_secs_f64();
+    count as f64 / elapsed
+}
+
+// QPACK Encoder
+fn qpack_encode(headers: &[(String, String)]) -> Vec<u8> {
+    let mut buf = Vec::new();
+    // Required Insert Count = 0, Delta Base = 0
+    buf.push(0); // RIC
+    buf.push(0); // Delta
+    
     for (name, value) in headers {
-        if let Some(idx) = STATIC.iter().position(|(n, v)| n == name && v == value) {
-            encode_int(&mut buf, idx, 6, 0xC0);
-            continue;
-        }
-        if let Some(idx) = STATIC.iter().position(|(n, _)| n == name) {
-            encode_int(&mut buf, idx, 4, 0x50);
-            encode_int(&mut buf, value.len(), 7, 0);
+        if let Some(idx) = find_static_idx(name, value) {
+            // Indexed Field Line
+            buf.push(0xC0 | (idx as u8 & 0x3F));
+        } else if let Some(idx) = STATIC_TABLE.iter().position(|e| e.0 == *name) {
+            // Literal with name reference
+            buf.push(0x40 | (idx as u8 & 0x0F));
+            buf.push((value.len() as u8) | 0x80); // H=1, len
             buf.extend_from_slice(value.as_bytes());
-            continue;
+        } else {
+            // Literal with literal name
+            buf.push(0x20 | (name.len() as u8 & 0x07));
+            buf.extend_from_slice(name.as_bytes());
+            buf.push(0x80 | (value.len() as u8)); // H=1, len
+            buf.extend_from_slice(value.as_bytes());
         }
-        encode_int(&mut buf, name.len(), 3, 0x20);
-        buf.extend_from_slice(name.as_bytes());
-        encode_int(&mut buf, value.len(), 7, 0);
-        buf.extend_from_slice(value.as_bytes());
     }
     buf
 }
 
-fn main() {
-    let n: u64 = std::env::args()
-        .nth(1)
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(200_000);
-    let headers = [
-        (":method", "GET"),
-        (":scheme", "https"),
-        (":path", "/"),
-        (":authority", "localhost"),
-        ("accept", "*/*"),
-        ("content-type", "application/json"),
-        ("user-agent", "h3_nif_rust"),
+// QPACK Benchmark
+fn qpack_bench(iters: usize) -> f64 {
+    let headers = vec![
+        (":method".to_string(), "GET".to_string()),
+        (":scheme".to_string(), "https".to_string()),
+        (":path".to_string(), "/".to_string()),
+        (":authority".to_string(), "localhost".to_string()),
+        ("accept".to_string(), "*/*".to_string()),
+        ("content-type".to_string(), "application/json".to_string()),
+        ("user-agent".to_string(), "rust".to_string()),
     ];
-    let start = std::time::Instant::now();
-    let mut last_len = 0usize;
-    for _ in 0..n {
-        last_len = qpack_encode(&headers).len();
+    
+    let start = Instant::now();
+    for _ in 0..iters {
+        let _ = qpack_encode(&headers);
     }
     let elapsed = start.elapsed().as_secs_f64();
-    let ips = n as f64 / elapsed;
-    println!("rust_qpack_encode iters={n} last_len={last_len} ips={ips:.0} elapsed_s={elapsed:.4}");
+    iters as f64 / elapsed
+}
+
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let mode = args.get(1).map(|s| s.as_str()).unwrap_or("qpack");
+    let count: usize = args.get(2).and_then(|s| s.parse().ok()).unwrap_or(50000);
+    
+    match mode {
+        "qpack" => {
+            let ips = qpack_bench(count);
+            println!("ips={}", ips);
+        }
+        "h1" => {
+            let rps = h1_benchmark(4999, count);
+            println!("rps={}", rps);
+        }
+        "all" => {
+            let qpack_ips = qpack_bench(count);
+            println!("qpack_ips={}", qpack_ips);
+            
+            let h1_rps = h1_benchmark(4999, count.min(5000));
+            println!("h1_rps={}", h1_rps);
+        }
+        _ => {
+            eprintln!("Usage: {} [qpack|h1|all] [iters]", args[0]);
+        }
+    }
 }

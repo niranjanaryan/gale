@@ -46,7 +46,7 @@ defmodule Gale.MixProject do
       {:finch, "~> 0.19"},
       {:req, "~> 0.5"},
       {:quic, "~> 1.8"},
-      {:hackney, "~> 4.5", optional: true, override: true},
+      {:hackney, "~> 4.5", optional: true},
       {:telemetry, "~> 1.0"},
       {:plug_cowboy, "~> 2.7", optional: true},
       {:quiver, "~> 0.4", optional: true},
