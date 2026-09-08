@@ -1,37 +1,39 @@
-# Sponsor Gale
+# Funding
 
-Support open source development of **Gale** — Phoenix HTTP/3 (QUIC) adapter for Elixir.
+Support the development of **Gale** and the distributed Elixir stack.
 
 ## GitHub Sponsors
 
-[![Sponsor](https://img.shields.io/badge/sponsor-GitHub-ea4aaa.svg)](https://github.com/sponsors/niranjanaryan)
+[Sponsor @niranjanaryan](https://github.com/sponsors/niranjanaryan)
 
-**Live now:** https://github.com/sponsors/niranjanaryan
-
-### Tiers
+## Sponsorship Tiers
 
 | Monthly | Name | Benefit |
 |---------|------|---------|
 | $5 | Thank you | Name in sponsors list |
-| $25 | User | Priority issue triage on Gale |
-| $100 | Team | Private Q&A on Phoenix + HTTP/3 deploy |
+| $25 | User | Priority issue triage |
+| $100 | Team | Private Q&A on architecture + deploy |
+| $500 | Partner | Roadmap input + priority feature requests |
 
-One-time: $25 / $100 / $500.
+One-time sponsorships are also welcome.
 
 ## What You're Funding
 
-- **Interoperability testing** — HTTP/3 clients, servers, CDNs
+- **HTTP/3 interoperability** — client/server/CDN testing
+- **QUIC/Zig NIF maintenance** — Bandit integration, QPACK
 - **CI/CD infrastructure** — Multi-OTP version testing
-- **Bandit/Phoenix integration** — Adapter maintenance
-- **Performance optimization** — Zig NIF, QPACK, QUIC
+- **Performance optimization** — throughput, latency, connection migration
 
-## Hex
+## Related Projects
 
-Gale is on Hex: https://hex.pm/packages/gale
+- [Dusk](https://github.com/niranjanaryan/dusk) — Zenoh-first cluster
+- [IngotCluster](https://github.com/niranjanaryan/ingot_cluster) — Iroh + Zenoh (`:ingot_cluster` on Hex)
+- [Zeiroh](https://github.com/niranjanaryan/zeiroh) — Phoenix FLAME overlay
+- [Orian](https://github.com/niranjanaryan/orian) — BLAKE3 / S3 / S5 storage
+- [Crucible](https://github.com/niranjanaryan/crucible) — Machine boot
 
-## Other Ways to Help
+See the unified [FUNDING_MANIFEST.md](../../FUNDING_MANIFEST.md) for the full stack overview.
 
-- ⭐ Star the repo: https://github.com/niranjanaryan/gale
-- 🐛 Report bugs: https://github.com/niranjanaryan/gale/issues
-- 📖 Improve docs: PRs welcome
-- 🔧 Contribute: See [CONTRIBUTING.md](CONTRIBUTING.md)
+---
+
+*Configured via [.github/FUNDING.yml](.github/FUNDING.yml).*
