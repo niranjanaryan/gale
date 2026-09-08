@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 — 2026-09-08
+
+* Remove `override: true` from hackney dep for Hex compatibility
+* Add GitHub Sponsors `.github/FUNDING.yml`
+* Add `LAUNCH_PLAN.md` for Elixir Forum launch strategy
+* CLI: Burrito single-file binary support via `mix gale.binary`
+* CLI: `mix gale.install` prefers Burrito binary, falls back to escript
+* Rust benchmark: HTTP/1.1 server + QPACK encode modes
+
 ## 0.1.0 — 2026-09-06
 
 First public Hex release.
