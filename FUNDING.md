@@ -6,6 +6,10 @@ Support the development of **Gale** and the distributed Elixir stack.
 
 [Sponsor @niranjanaryan](https://github.com/sponsors/niranjanaryan)
 
+## Buy Me a Coffee
+
+[Buy me a coffee](https://www.buymeacoffee.com/niranjanaryan)
+
 ## Sponsorship Tiers
 
 | Monthly | Name | Benefit |

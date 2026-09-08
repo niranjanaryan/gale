@@ -60,6 +60,7 @@ defmodule Gale.MixProject do
     [
       test: ["gale.build", "test"],
       bench: ["gale.build", "gale.bench"],
+      "bench.stacks": ["gale.build", "gale.bench.stacks"],
       "gale.cli": ["gale.build", "escript.build"],
       "gale.binary": ["gale.build", "compile"]
     ]
@@ -108,10 +109,11 @@ defmodule Gale.MixProject do
         "PUBLISH.md",
         "HASH.md",
         "CONTRIBUTING.md",
-        "SECURITY.md"
+        "SECURITY.md",
+        "GALE_STACKS.md"
       ],
       groups_for_extras: [
-        Guides: ["guides/phoenix.md", "guides/plug.md", "COMPARISON.md", "ECOSYSTEM.md"],
+        Guides: ["guides/phoenix.md", "guides/plug.md", "COMPARISON.md", "ECOSYSTEM.md", "GALE_STACKS.md"],
         Project: ["CHANGELOG.md", "LICENSE", "FUNDING.md", "benchmark/RESULTS.md"]
       ],
       groups_for_modules: [
@@ -119,7 +121,8 @@ defmodule Gale.MixProject do
         Plug: [Gale.Plug, Gale.Plug.Conn],
         Client: [Gale.HTTP, Gale.Finch, Gale.Req, Gale.Hackney],
         HTTP3: [Gale.HTTP3.Listener, Gale.HTTP3.Handler, Gale.Conn.H3],
-        Codec: [Gale.Native, Gale.Elixir]
+        Codec: [Gale.Native, Gale.Elixir],
+        Stacks: [Gale.Stacks]
       ]
     ]
   end
@@ -156,6 +159,7 @@ defmodule Gale.MixProject do
         "CONTRIBUTING.md",
         "SECURITY.md",
         "CODE_OF_CONDUCT.md",
+        "GALE_STACKS.md",
         ".formatter.exs"
       ],
       exclude_patterns: [~r"\.so$", ~r"native/rust/target"]
