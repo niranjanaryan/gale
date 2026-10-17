@@ -2,8 +2,9 @@ defmodule Gale.Server do
   @moduledoc """
   Drop-in for `Bandit.start_link/1` / `{Bandit, opts}`.
 
-  Starts Bandit for HTTP/1.1 and HTTP/2, injects `alt-svc`, and optionally
-  starts an HTTP/3 listener via `:quic_h3` when `http3: true` (needs certs).
+  Starts Bandit for HTTP/1.1 and HTTP/2 and optionally starts an HTTP/3 listener
+  via `:quic_h3` when `http3: true` (needs certs) or a keyword list is supplied.
+  Adds `alt-svc` only when HTTP/3 is enabled, using the HTTP/3 listener's port.
   """
   use Supervisor
   require Logger
@@ -26,11 +27,15 @@ defmodule Gale.Server do
     {h3_port, opts} = Keyword.pop(opts, :http3_port, Keyword.get(opts, :port, 4000))
     plug = Keyword.fetch!(opts, :plug)
 
-    wrapped = {Gale.Plug.Compat, {plug, h3_port: h3_port}}
-    bandit_opts = Keyword.put(opts, :plug, wrapped)
-
-    bandit = Supervisor.child_spec({Bandit, bandit_opts}, id: Bandit)
     h3_children = h3_child(http3, h3_port, plug, opts)
+
+    served_plug =
+      if h3_children == [],
+        do: plug,
+        else: {Gale.Plug.Compat, {plug, h3_port: h3_listen_port(http3, h3_port)}}
+
+    bandit_opts = Keyword.put(opts, :plug, served_plug)
+    bandit = Supervisor.child_spec({Bandit, bandit_opts}, id: Bandit)
 
     :telemetry.execute(
       [:gale, :server, :init],

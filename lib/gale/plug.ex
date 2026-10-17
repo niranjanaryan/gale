@@ -72,6 +72,9 @@ defmodule Gale.Plug do
   @doc """
   Returns child specs for HTTP and HTTPS listeners.
 
+  HTTP/3 options apply only to the HTTPS listener. The separate HTTP listener
+  remains TCP-only, including when `:http3` is a keyword list.
+
   Use this when you need separate HTTP/HTTPS child specs:
 
       children = Gale.Plug.child_specs(
@@ -90,9 +93,11 @@ defmodule Gale.Plug do
         scheme_opts = opts[scheme],
         is_list(scheme_opts) do
       h3 = resolve_http3(http3, scheme, scheme_opts)
+
       %{
         id: {__MODULE__, scheme},
-        start: {__MODULE__, :start_link, [[plug: plug, scheme: scheme] ++ scheme_opts ++ [http3: h3]]}
+        start:
+          {__MODULE__, :start_link, [[plug: plug, scheme: scheme] ++ scheme_opts ++ [http3: h3]]}
       }
     end
   end
@@ -103,6 +108,6 @@ defmodule Gale.Plug do
     if cert && key, do: [port: opts[:port] || 443, certfile: cert, keyfile: key], else: false
   end
 
-  defp resolve_http3(opts, _scheme, _http_opts) when is_list(opts), do: opts
+  defp resolve_http3(opts, :https, _http_opts) when is_list(opts), do: opts
   defp resolve_http3(_http3, _, _), do: false
 end

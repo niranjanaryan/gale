@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+* Apply explicit HTTP/3 options only to HTTPS in Phoenix and Plug child specs,
+  preventing duplicate QUIC listeners when HTTP and HTTPS are both configured.
+* Only inject Alt-Svc when HTTP/3 is enabled, and advertise the configured UDP
+  port when it differs from the TCP port or `http3_port` default.
+
 ## 0.1.1 — 2026-09-08
 
 * Remove `override: true` from hackney dep for Hex compatibility

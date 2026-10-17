@@ -73,6 +73,30 @@ Generate self-signed certs:
 mix phx.gen.cert
 ```
 
+### Separate HTTP, HTTPS, and HTTP/3 ports
+
+```elixir
+config :my_app, MyAppWeb.Endpoint,
+  http: [port: 4000],
+  https: [port: 4443, certfile: "cert.pem", keyfile: "key.pem"],
+  http3: [port: 9443]
+```
+
+The HTTP listener stays TCP-only. The HTTPS listener starts one QUIC listener
+on UDP 9443, inheriting its certificate and key from HTTPS. HTTPS responses
+advertise `alt-svc: h3="host:9443"; ma=86400`. Explicit HTTP/3 certificates and
+keys override the inherited values. `http3: true` instead reuses HTTPS's port,
+certificate, and key.
+
+The same HTTPS-only rule applies to `Gale.Plug.child_specs/1`. An HTTP-only
+configuration does not start HTTP/3, even if it supplies a keyword list. Omitting
+`:http3` or setting it to `false` adds no QUIC listener or Gale-injected Alt-Svc
+header. Headers set by the application's own Plug pipeline remain its choice.
+
+Alt-Svc advertises an endpoint; confirm actual HTTP/3 negotiation with an H3
+client. The presence of the header alone does not demonstrate a working QUIC
+connection.
+
 ### Production
 
 ```elixir
@@ -98,7 +122,8 @@ Browser ─── HTTP/1.1 ───► Bandit ───► Phoenix Endpoint
 LiveView/WebSocket ─── TCP ──► Bandit (unchanged)
 ```
 
-Gale sends `alt-svc: h3="host:443"` headers so browsers upgrade to HTTP/3.
+When HTTP/3 is enabled, the HTTPS listener sends Alt-Svc headers using the
+configured HTTP/3 port so clients can discover that endpoint.
 
 ## What Stays on Bandit
 

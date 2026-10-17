@@ -1,15 +1,19 @@
 defmodule GaleDropinTest do
   use ExUnit.Case, async: false
 
-  test "Gale.start_link is a Bandit drop-in and injects alt-svc" do
-    port = 4911
-    {:ok, pid} = Gale.start_link(plug: Gale.BenchPlug, port: port, scheme: :http)
+  defmodule ResponsePlug do
+    def init(opts), do: opts
+    def call(conn, _opts), do: Plug.Conn.send_resp(conn, 200, "ok")
+  end
+
+  test "Gale is a Bandit drop-in without advertising disabled HTTP/3" do
+    server = start_supervised!({Gale.Server, plug: ResponsePlug, port: 0, scheme: :http})
+    {_, bandit, _, _} = List.keyfind(Supervisor.which_children(server), Bandit, 0)
+    {:ok, {_, port}} = ThousandIsland.listener_info(bandit)
     {:ok, resp} = Gale.get("http://127.0.0.1:#{port}/")
     assert resp.status == 200
     assert resp.body == "ok"
-    alts = Req.Response.get_header(resp, "alt-svc")
-    assert Enum.any?(List.wrap(alts), &String.contains?(&1, "h3="))
-    Process.exit(pid, :normal)
+    assert Req.Response.get_header(resp, "alt-svc") == []
   end
 
   test "Gale.PhoenixAdapter.child_specs matches Bandit shape" do

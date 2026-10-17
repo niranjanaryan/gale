@@ -23,7 +23,8 @@ defmodule Gale.PhoenixAdapter do
         ]
 
   `:http3` may be `true` (reuse https certs and port), a keyword list, or omitted.
-  Responses on H1/H2 include `alt-svc` so browsers upgrade to H3.
+  HTTP/3 belongs to the HTTPS listener; a separate HTTP listener remains TCP-only.
+  HTTPS responses include `alt-svc` when HTTP/3 is enabled, using its UDP port.
   """
 
   @doc "Gale server supervisor for `scheme` (`:http` or `:https`) on the endpoint."
@@ -94,12 +95,14 @@ defmodule Gale.PhoenixAdapter do
     end
   end
 
-  defp merge_http3(h3, _scheme, opts) when is_list(h3) do
+  defp merge_http3(h3, :https, opts) when is_list(h3) do
     h3
     |> Keyword.put_new(:certfile, opts[:certfile] || opts[:cert])
     |> Keyword.put_new(:keyfile, opts[:keyfile] || opts[:key])
     |> Keyword.put_new(:port, opts[:port] || 443)
   end
+
+  defp merge_http3(h3, :http, _opts) when is_list(h3), do: false
 
   defp find_bandit(sup) do
     sup
